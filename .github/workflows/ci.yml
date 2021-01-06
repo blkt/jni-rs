@@ -66,6 +66,8 @@ jobs:
             os: macOS-latest
           - build: Windows
             os: windows-latest
+          - build: FreeBSD
+            os: macOS-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -76,9 +78,19 @@ jobs:
           profile: minimal
           override: true
       - name: Install java
+        if: matrix.build != 'FreeBSD'
         uses: actions/setup-java@v1
         with:
           java-version: '1.8.0'
+      - name: Install java
+        if: matrix.build == 'FreeBSD'
+        uses: vmactions/freebsd-vm@v0.1.0
+        with:
+          usesh: true
+          prepare: |
+            mount -t fdescfs fdesc /dev/fd
+            mount -t procfs proc /proc
+            pkg install -y openjdk8
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -92,8 +104,13 @@ jobs:
         if: runner.os == 'Linux'
         run: .github/workflows/shellcheck.sh
       - name: Test invocation
-        if: runner.os != 'Windows'
+        if: runner.os != 'Windows' && matrix.build != 'FreeBSD'
         run: .github/workflows/run_invocation_tests.sh
+      - name: Test invocation
+        if: runner.os != 'Windows' && matrix.build == 'FreeBSD'
+        uses: vmactions/freebsd-vm@v0.1.0
+        with:
+          command: .github/workflows/run_invocation_tests.sh
       - name: Test invocation
         if: runner.os == 'Windows'
         run: .github/workflows/run_windows_invocation_tests.ps1

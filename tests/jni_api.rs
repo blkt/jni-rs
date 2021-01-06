@@ -484,6 +484,12 @@ pub fn get_long_array_elements_commit() {
 }
 
 #[test]
+#[cfg(target_os = "freebsd")]
+pub fn test_failure() {
+    assert!(false, "this is a dummy test for FreeBSD");
+}
+
+#[test]
 pub fn get_primitive_array_critical() {
     let env = attach_current_thread();
 
